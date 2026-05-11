@@ -21,10 +21,14 @@ public class GameController : MonoBehaviour
     public GameObject[] Buttons;
     public GameObject[] Panels;
     public Slider TimeSlider;
-    public TMP_Text scoreText;
+    public TMP_Text CurrentScore;
+    public TMP_Text WinScore;
+    public TMP_Text MaxScore;
     public Sprite[] pairSprites;
     public GameObject Pool;
     public GameObject Grid;
+    public AudioSource SFX1;
+    public AudioSource SFX2;
     bool Create = true;
 
     int FirstSelect = 0;
@@ -33,10 +37,11 @@ public class GameController : MonoBehaviour
     float LevelTime ;
     bool LevelTimeStoper = false;
     int Point = 0;
-    int[] GoalLevels = {4,6,6,6,6};//121518
+    int[] GoalLevels = {4,6,8,15,18};//121518
     int Corrects = 0;
     int Object=0 ;
     int createdObject = 0;
+    
 
 
     void Start()
@@ -47,7 +52,9 @@ public class GameController : MonoBehaviour
         Time.timeScale = 1;
         LevelTime = TimesLevels[Level - 1];
         StartCoroutine(CreateButtons());
-
+        float volume = PlayerPrefs.GetFloat("MusicVolume", 1f);
+        SFX1.volume = volume;
+        SFX2.volume = volume;
     }
     private void Update()
     {
@@ -113,13 +120,18 @@ public class GameController : MonoBehaviour
 
     void Win()
     {
+        WinScore.text = WritePoint(Point);
+        int mxScr = PlayerPrefs.GetInt("MaxPoint" + Level);
+        MaxScore.text = WritePoint(mxScr);
+
         if (Level == 5)
         {
-            Panels[2].SetActive(true); Debug.Log("bitirdin");
+            Panels[2].SetActive(true);
         }
         else
             Panels[0].SetActive(true);
         Time.timeScale = 0;
+        SaveLevel(Level);
     }
     void Lose()
     {
@@ -157,9 +169,14 @@ public class GameController : MonoBehaviour
     }
     void CalculatePoint()
     {
-        Point += (int) (LevelTime * 7 + 900 );
+        Point += (int)(LevelTime * 9 + 1300);
 
-        string scoreStr = Point.ToString();
+        CurrentScore.text = WritePoint(Point);
+    }
+
+    string WritePoint(int pnt)
+    {
+        string scoreStr = pnt.ToString();
         string result = "";
 
         foreach (char c in scoreStr)
@@ -167,9 +184,7 @@ public class GameController : MonoBehaviour
             int digit = c - '0';
             result += $"<sprite={digit}>";
         }
-        Debug.Log(result);
-        scoreText.text = result;
-
+        return result;
     }
 
     IEnumerator Controled(int SelectedNumber)
@@ -185,9 +200,7 @@ public class GameController : MonoBehaviour
             FirstSelect = 0;
             FirstButon = null;
             ControlButtons(true);
-            SaveLevel(Level);
             Corrects += 1;
-            Debug.Log("dogru"+Corrects);
             CalculatePoint();
 
         }
@@ -205,7 +218,6 @@ public class GameController : MonoBehaviour
     }
     IEnumerator CreateButtons()
     {
-        Debug.Log("create calýstý");
         yield return new WaitForSeconds(0.1f);
         while (Create)
         {
@@ -229,7 +241,18 @@ public class GameController : MonoBehaviour
     }
     public void SaveLevel(int completedLevel)
     {
+        int mxpoint = PlayerPrefs.GetInt("MaxPoint" + Level);
+
         PlayerPrefs.SetInt("Level", completedLevel);
+        if (mxpoint > Point) { } 
+        
+        else
+            {
+            PlayerPrefs.SetInt("MaxPoint" + Level, Point);
+            }
+                Debug.Log("save point" + Point);
+
+
     }
 
 }
